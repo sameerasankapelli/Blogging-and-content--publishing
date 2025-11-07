@@ -57,7 +57,7 @@ app.use('/api/collections', collectionsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/ai', require('./routes/ai.routes'));
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || "https://blogging-and-content-publishing-client.onrender.com";
 
 (async () => {
   try {
