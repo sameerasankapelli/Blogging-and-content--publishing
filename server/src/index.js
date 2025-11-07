@@ -20,9 +20,15 @@ const usersRoutes = require('./routes/users.routes');
 const app = express();
 const server = http.createServer(app);
 
+// ✅ Fix CORS for both localhost and deployed frontend
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://blogging-and-content-publishing-client.onrender.com"
+];
+
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_ORIGIN || "https://blogging-and-content-publishing-client.onrender.com",
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
   },
 });
@@ -35,8 +41,21 @@ io.on('connection', (socket) => {
   });
 });
 
+// ✅ Apply same CORS policy to Express
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (e.g. mobile apps, curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `CORS policy does not allow access from origin ${origin}`;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true
+}));
+
 // Middleware
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || "https://blogging-and-content-publishing-client.onrender.com", credentials: true }));
 app.use(express.json({ limit: '2mb' }));
 app.use(morgan('dev'));
 
@@ -57,14 +76,15 @@ app.use('/api/collections', collectionsRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/ai', require('./routes/ai.routes'));
 
-const PORT = process.env.PORT || "https://blogging-and-content-publishing-client.onrender.com";
+// ✅ Correct PORT
+const PORT = process.env.PORT || 5000;
 
 (async () => {
   try {
     await connectDB();
-    server.listen(PORT, () => console.log(`Server listening on ${PORT}`));
+    server.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
   } catch (err) {
-    console.error('Failed to start server', err);
+    console.error('❌ Failed to start server', err);
     process.exit(1);
   }
 })();
